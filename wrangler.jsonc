@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "fuxian-novel-workbench",
+  "name": "writer6634",
   "compatibility_date": "2026-09-10",
   "compatibility_flags": ["nodejs_compat"],
   "main": "vinext/server/app-router-entry",
