@@ -1,6 +1,0 @@
-# Local development does not require Cloudflare Access: NODE_ENV=development
-# uses a local-only identity. These values are only needed if you deliberately
-# want to test Access JWT validation in a Worker development environment.
-#
-# CF_ACCESS_TEAM_DOMAIN=https://your-team.cloudflareaccess.com
-# CF_ACCESS_AUD=your-application-audience-tag
