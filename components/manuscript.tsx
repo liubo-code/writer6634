@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowUp, ArrowDown, BookOpen, Check, ChevronLeft, ChevronRig
 import { Button } from '@/components/ui/button';
 import { Toaster, toast } from 'sonner';
 import { useManuscript } from '@/lib/use-manuscript';
-import { fieldNames, wordCount, type Book, type Card } from '@/lib/story';
+import { cardFieldLabel, wordCount, type Book, type Card } from '@/lib/story';
 
 function download(name: string, text: string, type = 'text/plain') {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -96,6 +96,19 @@ export default function ManuscriptWorkspace({
     const m = ms.get(c);
     return [c.title, c.text, m.content, ...Object.values(c.fields)].join(' ').toLowerCase().includes(q);
   }), [chapters, search, ms.items]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const chapterGroups = useMemo(() => {
+    const result = book.stages.map((stage, index) => ({
+      id: stage.id,
+      title: stage.title || `阶段 ${index + 1}`,
+      number: index + 1,
+      tags: stage.tags || [],
+      chapters: filtered.filter(c => c.stageId === stage.id),
+    }));
+    const loose = filtered.filter(c => !book.stages.some(s => s.id === c.stageId));
+    if (loose.length) result.push({ id: '', title: '未分阶段', number: book.stages.length + 1, tags: [], chapters: loose });
+    return result.filter(g => g.chapters.length);
+  }, [book.stages, filtered]);
 
   const matches = useMemo(() => {
     if (!findText || !current?.content) return [] as number[];
@@ -220,6 +233,14 @@ export default function ManuscriptWorkspace({
     setSelectedId(next?.id || '');
   };
 
+  const chapterButton = (c: Card, mobile = false) => {
+    const n = numbers.get(c.id) || chapters.indexOf(c) + 1;
+    const count = wordCount(ms.get(c).content);
+    return mobile
+      ? <button key={c.id} className={c.id === chapter?.id ? 'active' : ''} onClick={() => selectChapter(c.id)}><span>{String(n).padStart(2, '0')}</span><div><strong>{c.title || '未命名章节'}</strong><small>{count.toLocaleString()} 字 · {c.status}</small></div></button>
+      : <button key={c.id} className={c.id === chapter?.id ? 'active' : ''} onClick={() => selectChapter(c.id)}><span className="manuscript-chapter-no">{String(n).padStart(2, '0')}</span><span className="manuscript-chapter-name"><strong>{c.title || '未命名章节'}</strong><small>{count.toLocaleString()} 字 · {c.status}</small></span></button>;
+  };
+
   return <div className={'manuscript-app ' + (focus ? 'manuscript-focus' : '')}>
     <Toaster richColors position="bottom-right"/>
     {!focus && <aside className="manuscript-sidebar">
@@ -231,14 +252,10 @@ export default function ManuscriptWorkspace({
       <div className="manuscript-section-tabs"><button onClick={() => onBackOutline()}><BookOpen size={15}/>大纲</button><button className="active"><FileText size={15}/>正文</button></div>
       <div className="manuscript-search"><Search size={15}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索章节 / 正文"/></div>
       <div className="manuscript-chapter-list">
-        {filtered.map(c => {
-          const n = numbers.get(c.id) || chapters.indexOf(c) + 1;
-          const count = wordCount(ms.get(c).content);
-          return <button key={c.id} className={c.id === chapter?.id ? 'active' : ''} onClick={() => selectChapter(c.id)}>
-            <span className="manuscript-chapter-no">{String(n).padStart(2, '0')}</span>
-            <span className="manuscript-chapter-name"><strong>{c.title || '未命名章节'}</strong><small>{count.toLocaleString()} 字 · {c.status}</small></span>
-          </button>;
-        })}
+        {chapterGroups.map(group => <section className="manuscript-stage-group" key={group.id || '__loose'}>
+          <div className="manuscript-stage-label"><span>{group.id ? `阶段 ${String(group.number).padStart(2, '0')}` : '未分阶段'}</span><strong>{group.title}</strong>{!!group.tags.length&&<div>{group.tags.slice(0,2).map(t=><i key={t}>#{t}</i>)}</div>}</div>
+          {group.chapters.map(c => chapterButton(c))}
+        </section>)}
         {!filtered.length && <p className="manuscript-empty-list">没有匹配的章节。</p>}
       </div>
       <div className="manuscript-sidebar-footer"><Button variant="outline" onClick={addChapter}><Plus size={15}/>新建章节</Button><span>{chapters.length} 章 · {totalWords.toLocaleString()} 字</span></div>
@@ -269,11 +286,10 @@ export default function ManuscriptWorkspace({
           <div className="manuscript-mobile-drawer-head"><div><strong>{book.title}</strong><span>{chapters.length} 章 · {totalWords.toLocaleString()} 字</span></div><Button variant="ghost" size="icon" aria-label="关闭章节列表" onClick={() => setMobileChaptersOpen(false)}><X/></Button></div>
           <div className="manuscript-mobile-drawer-search"><Search size={16}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索章节 / 正文"/></div>
           <div className="manuscript-mobile-drawer-list">
-            {filtered.map(c => {
-              const n = numbers.get(c.id) || chapters.indexOf(c) + 1;
-              const count = wordCount(ms.get(c).content);
-              return <button key={c.id} className={c.id === chapter?.id ? 'active' : ''} onClick={() => selectChapter(c.id)}><span>{String(n).padStart(2, '0')}</span><div><strong>{c.title || '未命名章节'}</strong><small>{count.toLocaleString()} 字 · {c.status}</small></div></button>;
-            })}
+            {chapterGroups.map(group => <section className="manuscript-mobile-stage-group" key={group.id || '__loose'}>
+              <div className="manuscript-mobile-stage-label"><span>{group.id ? `阶段 ${String(group.number).padStart(2, '0')}` : '未分阶段'}</span><strong>{group.title}</strong>{!!group.tags.length&&<div>{group.tags.slice(0,3).map(t=><i key={t}>#{t}</i>)}</div>}</div>
+              {group.chapters.map(c => chapterButton(c, true))}
+            </section>)}
             {!filtered.length && <p>没有匹配的章节。</p>}
           </div>
           <div className="manuscript-mobile-drawer-foot"><Button onClick={addChapter}><Plus size={15}/>新建章节</Button></div>
@@ -312,10 +328,11 @@ export default function ManuscriptWorkspace({
           <div className="outline-reference-head"><div><span>本章大纲</span><strong>{chapter.title || `第 ${numbers.get(chapter.id)} 章`}</strong></div><Button variant="ghost" size="sm" onClick={() => setOutlineOpen(v => !v)}>{outlineOpen ? '收起' : '展开'}</Button></div>
           {outlineOpen && <div className="outline-reference-scroll">
             <Button variant="outline" className="outline-open-card" onClick={() => onBackOutline(chapter.id)}><Settings2 size={14}/>打开大纲卡编辑</Button>
-            {chapter.text && <Reference label="核心事件" value={chapter.text}/>} 
-            {['goal','choice','event','result','pov','emotion','relation','detail','hook'].map(k => chapter.fields[k] ? <Reference key={k} label={fieldNames[k] || k} value={chapter.fields[k]}/> : null)}
+            {!chapter.hiddenFields.includes('__text') && chapter.text && <Reference label={cardFieldLabel(chapter,'__text')} value={chapter.text}/>} 
+            {Object.entries(chapter.fields).filter(([k,v]) => !!v && !k.endsWith('Card') && !chapter.hiddenFields.includes(k)).map(([k,v]) => <Reference key={k} label={cardFieldLabel(chapter,k)} value={v}/>)}
             <div className="outline-reference-block"><span>出场人物</span>{chars.length ? <div className="outline-character-tags">{chars.map(c => <button key={c.id} onClick={() => onBackOutline(c.id)}>{c.title || '未命名人物'}</button>)}</div> : <p>还没绑定人物。</p>}</div>
             {!!chapter.tags.length && <div className="outline-reference-block"><span>标签</span><div className="outline-tags">{chapter.tags.map(t => <i key={t}>{t}</i>)}</div></div>}
+            {!!stage?.tags?.length && <div className="outline-reference-block"><span>阶段标签</span><div className="outline-tags">{stage.tags.map(t => <i key={t}>{t}</i>)}</div></div>}
             <label className="outline-notes"><span>修文备忘</span><textarea value={current?.revisionNotes || ''} placeholder="这里记修文问题，不打断正文。" onChange={e => ms.update(chapter, { revisionNotes: e.target.value })}/></label>
           </div>}
         </aside>}
