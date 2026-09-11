@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "伏线",
+  "version": "0.1.0",
+  "identifier": "com.fuxian.writer",
+  "build": {
+    "beforeDevCommand": "pnpm desktop:web",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "pnpm desktop:web:build",
+    "frontendDist": "../dist-desktop"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "伏线 · 小说工作台",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "shortDescription": "伏线 · 私人小说工作台",
+    "longDescription": "支持大纲、正文、本地 SQLite 保存与后续云同步的私人小说写作工作台。"
+  }
+}
