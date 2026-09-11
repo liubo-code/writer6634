@@ -1,0 +1,106 @@
+:root{
+  --fuxian-sidebar-width:238px;
+  --fuxian-sidebar-bg:#243449;
+  --fuxian-scrollbar:#5f7489;
+  --fuxian-scrollbar-hover:#7890a6;
+}
+
+/* 网页大纲 / 正文统一左侧栏尺寸和品牌区节奏。 */
+.manuscript-sidebar{
+  width:var(--fuxian-sidebar-width);
+  min-width:var(--fuxian-sidebar-width);
+  background:var(--fuxian-sidebar-bg);
+  transition:margin-left .2s ease;
+}
+.manuscript-brand{
+  gap:13px;
+  padding:24px 15px 27px;
+}
+.manuscript-brand>span{
+  width:39px;
+  height:39px;
+  border-radius:10px;
+}
+.manuscript-brand strong{
+  font-size:24px;
+  letter-spacing:.15em;
+  font-weight:650;
+}
+.manuscript-brand small{
+  font-size:12px;
+  margin-top:1px;
+  letter-spacing:.13em;
+}
+.manuscript-book-picker{
+  gap:4px;
+  padding:0 6px 22px;
+  border-bottom:1px solid #3a4b60;
+}
+.manuscript-book-picker select{
+  height:36px;
+  border-color:#4a5b70;
+  background:#2e4157;
+  border-radius:7px;
+}
+.manuscript-section-tabs{
+  padding-top:14px;
+}
+
+/* 全站只保留一个侧栏收起逻辑，避免大纲和正文切换时尺寸跳动。 */
+.web-sidebar-toggle{
+  position:fixed;
+  z-index:95;
+  top:21px;
+  left:calc(var(--fuxian-sidebar-width) + 10px);
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d8e1ea;
+  border-radius:9px;
+  background:rgba(255,255,255,.94);
+  color:#536b83;
+  box-shadow:0 2px 10px #24344912;
+  backdrop-filter:blur(8px);
+  transition:left .2s ease,background .15s ease,color .15s ease;
+}
+.web-sidebar-toggle:hover{background:#f3f7fa;color:#294d70}
+.topbar [data-slot="sidebar-trigger"]{display:none}
+.topbar,.manuscript-topbar{padding-left:58px}
+
+html.fuxian-sidebar-collapsed [data-slot="sidebar-gap"]{width:0!important}
+html.fuxian-sidebar-collapsed [data-slot="sidebar-container"]{left:calc(var(--fuxian-sidebar-width) * -1)!important}
+html.fuxian-sidebar-collapsed .manuscript-sidebar{margin-left:calc(var(--fuxian-sidebar-width) * -1)}
+html.fuxian-sidebar-collapsed .web-sidebar-toggle{left:10px}
+
+/* 深色背景配同色系滚动条，不再出现白色轨道。 */
+.app-sidebar [data-slot="sidebar-content"],
+.manuscript-chapter-list{
+  scrollbar-width:thin;
+  scrollbar-color:var(--fuxian-scrollbar) var(--fuxian-sidebar-bg);
+}
+.app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar,
+.manuscript-chapter-list::-webkit-scrollbar{width:8px;height:8px}
+.app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar-track,
+.manuscript-chapter-list::-webkit-scrollbar-track{background:var(--fuxian-sidebar-bg)}
+.app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar-thumb,
+.manuscript-chapter-list::-webkit-scrollbar-thumb{
+  background:var(--fuxian-scrollbar);
+  border:2px solid var(--fuxian-sidebar-bg);
+  border-radius:999px;
+}
+.app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar-thumb:hover,
+.manuscript-chapter-list::-webkit-scrollbar-thumb:hover{background:var(--fuxian-scrollbar-hover)}
+
+@media(max-width:767px){
+  .web-sidebar-toggle{display:none}
+  .topbar [data-slot="sidebar-trigger"]{display:inline-flex}
+  .topbar,.manuscript-topbar{padding-left:14px}
+  html.fuxian-sidebar-collapsed [data-slot="sidebar-gap"]{width:var(--sidebar-width)!important}
+  html.fuxian-sidebar-collapsed [data-slot="sidebar-container"]{left:0!important}
+  html.fuxian-sidebar-collapsed .manuscript-sidebar{margin-left:0}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .manuscript-sidebar,.web-sidebar-toggle{transition:none}
+}
