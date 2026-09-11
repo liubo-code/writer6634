@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUp, ArrowDown, BookOpen, Check, ChevronLeft, ChevronRight, Download, FileText, Focus, Loader2, Network, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowUp, ArrowDown, BookOpen, Check, ChevronLeft, ChevronRight, Download, FileText, Focus, ListOrdered, Loader2, Network, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster, toast } from 'sonner';
 import { useManuscript } from '@/lib/use-manuscript';
@@ -46,6 +46,7 @@ export default function ManuscriptWorkspace({
   const [replaceText, setReplaceText] = useState('');
   const [matchCase, setMatchCase] = useState(false);
   const [matchIndex, setMatchIndex] = useState(0);
+  const [mobileChaptersOpen, setMobileChaptersOpen] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const findInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,6 +59,10 @@ export default function ManuscriptWorkspace({
       if (savedFont >= 15 && savedFont <= 24) setFontSize(savedFont);
     } catch { setSelectedId(chapters[0]?.id || ''); }
   }, [book.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 600px)').matches) setOutlineOpen(false);
+  }, []);
 
   useEffect(() => {
     if (selectedId && !chapters.some(c => c.id === selectedId)) setSelectedId(chapters[0]?.id || '');
@@ -79,6 +84,7 @@ export default function ManuscriptWorkspace({
   const selectChapter = (id: string) => {
     setSelectedId(id);
     setMatchIndex(0);
+    setMobileChaptersOpen(false);
     try { localStorage.setItem('fuxian-manuscript-chapter-' + book.id, id); } catch {}
   };
 
@@ -239,6 +245,11 @@ export default function ManuscriptWorkspace({
     </aside>}
 
     <main className="manuscript-workspace">
+      {!focus && <div className="manuscript-mobile-bar">
+        <div className="manuscript-mobile-modules"><button onClick={() => onBackOutline()}><BookOpen size={15}/>大纲</button><button className="active"><FileText size={15}/>正文</button></div>
+        <div className="manuscript-mobile-tools"><button onClick={() => { setOutlineOpen(false); setMobileChaptersOpen(true); }}><ListOrdered size={15}/>章节</button><button className={outlineOpen ? 'active' : ''} onClick={() => { setMobileChaptersOpen(false); setOutlineOpen(v => !v); }}><BookOpen size={15}/>本章大纲</button></div>
+      </div>}
+
       <header className="manuscript-topbar">
         <div className="manuscript-heading">
           {focus && <Button variant="ghost" size="icon" aria-label="退出专注" onClick={() => setFocus(false)}><ArrowLeft/></Button>}
@@ -253,7 +264,23 @@ export default function ManuscriptWorkspace({
         </div>
       </header>
 
-      {findOpen && <div className="flex flex-wrap items-center gap-2 border-b border-[#dce4ee] bg-white px-4 py-2 text-sm shadow-sm">
+      {mobileChaptersOpen && <div className="manuscript-mobile-overlay" role="presentation" onClick={() => setMobileChaptersOpen(false)}>
+        <aside className="manuscript-mobile-chapters" role="dialog" aria-modal="true" aria-label="章节列表" onClick={e => e.stopPropagation()}>
+          <div className="manuscript-mobile-drawer-head"><div><strong>{book.title}</strong><span>{chapters.length} 章 · {totalWords.toLocaleString()} 字</span></div><Button variant="ghost" size="icon" aria-label="关闭章节列表" onClick={() => setMobileChaptersOpen(false)}><X/></Button></div>
+          <div className="manuscript-mobile-drawer-search"><Search size={16}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索章节 / 正文"/></div>
+          <div className="manuscript-mobile-drawer-list">
+            {filtered.map(c => {
+              const n = numbers.get(c.id) || chapters.indexOf(c) + 1;
+              const count = wordCount(ms.get(c).content);
+              return <button key={c.id} className={c.id === chapter?.id ? 'active' : ''} onClick={() => selectChapter(c.id)}><span>{String(n).padStart(2, '0')}</span><div><strong>{c.title || '未命名章节'}</strong><small>{count.toLocaleString()} 字 · {c.status}</small></div></button>;
+            })}
+            {!filtered.length && <p>没有匹配的章节。</p>}
+          </div>
+          <div className="manuscript-mobile-drawer-foot"><Button onClick={addChapter}><Plus size={15}/>新建章节</Button></div>
+        </aside>
+      </div>}
+
+      {findOpen && <div className="manuscript-findbar flex flex-wrap items-center gap-2 border-b border-[#dce4ee] bg-white px-4 py-2 text-sm shadow-sm">
         <span className="mr-1 whitespace-nowrap font-medium text-[#51647a]">本章查找</span>
         <div className="flex h-9 min-w-[220px] flex-1 items-center rounded-md border border-[#d5dee8] bg-white px-2.5 focus-within:border-[#7ea3c5]">
           <Search size={15} className="mr-2 shrink-0 text-[#8a99ac]"/>
