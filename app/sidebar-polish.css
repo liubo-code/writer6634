@@ -47,11 +47,18 @@
 }
 
 /* 全站只保留一个侧栏收起逻辑，避免大纲和正文切换时尺寸跳动。 */
-.web-sidebar-toggle{
+.web-sidebar-tools{
   position:fixed;
   z-index:95;
   top:21px;
   left:calc(var(--fuxian-sidebar-width) + 10px);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:left .2s ease;
+}
+.web-sidebar-toggle,
+.web-sidebar-more{
   width:36px;
   height:36px;
   display:grid;
@@ -62,16 +69,56 @@
   color:#536b83;
   box-shadow:0 2px 10px #24344912;
   backdrop-filter:blur(8px);
-  transition:left .2s ease,background .15s ease,color .15s ease;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
 }
-.web-sidebar-toggle:hover{background:#f3f7fa;color:#294d70}
+.web-sidebar-toggle:hover,
+.web-sidebar-more:hover,
+.web-sidebar-more.active{
+  background:#f3f7fa;
+  color:#294d70;
+  border-color:#c7d5e1;
+}
+.web-sidebar-utility-menu{
+  position:absolute;
+  top:44px;
+  left:42px;
+  min-width:154px;
+  padding:6px;
+  border:1px solid #d8e1ea;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 12px 30px #24344920;
+}
+.web-sidebar-utility-menu button{
+  width:100%;
+  height:38px;
+  padding:0 10px;
+  border-radius:7px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#40566e;
+  font-size:13px;
+  text-align:left;
+}
+.web-sidebar-utility-menu button:hover{background:#eef4f8;color:#294d70}
 .topbar [data-slot="sidebar-trigger"]{display:none}
-.topbar,.manuscript-topbar{padding-left:58px}
+.topbar,.manuscript-topbar{padding-left:98px}
 
 html.fuxian-sidebar-collapsed [data-slot="sidebar-gap"]{width:0!important}
 html.fuxian-sidebar-collapsed [data-slot="sidebar-container"]{left:calc(var(--fuxian-sidebar-width) * -1)!important}
 html.fuxian-sidebar-collapsed .manuscript-sidebar{margin-left:calc(var(--fuxian-sidebar-width) * -1)}
-html.fuxian-sidebar-collapsed .web-sidebar-toggle{left:10px}
+html.fuxian-sidebar-collapsed .web-sidebar-tools{left:10px}
+
+/* 大纲底部三项移到顶栏“更多”菜单，腾出侧栏纵向空间。 */
+.app-sidebar [data-slot="sidebar-footer"] [data-slot="sidebar-menu"]{display:none}
+.app-sidebar [data-slot="sidebar-footer"]{padding-top:10px}
+.app-sidebar [data-slot="sidebar-footer"] .sidebar-note{margin-top:0}
+
+/* 正文页没有这三个大纲工具，隐藏更多按钮，只保留折叠。 */
+body:has(.manuscript-app) .web-sidebar-more{display:none}
+body:has(.manuscript-app) .web-sidebar-utility-menu{display:none}
+body:has(.manuscript-app) .manuscript-topbar{padding-left:58px}
 
 /* 深色背景配同色系滚动条，不再出现白色轨道。 */
 .app-sidebar [data-slot="sidebar-content"],
@@ -93,14 +140,15 @@ html.fuxian-sidebar-collapsed .web-sidebar-toggle{left:10px}
 .manuscript-chapter-list::-webkit-scrollbar-thumb:hover{background:var(--fuxian-scrollbar-hover)}
 
 @media(max-width:767px){
-  .web-sidebar-toggle{display:none}
+  .web-sidebar-tools{display:none}
   .topbar [data-slot="sidebar-trigger"]{display:inline-flex}
   .topbar,.manuscript-topbar{padding-left:14px}
   html.fuxian-sidebar-collapsed [data-slot="sidebar-gap"]{width:var(--sidebar-width)!important}
   html.fuxian-sidebar-collapsed [data-slot="sidebar-container"]{left:0!important}
   html.fuxian-sidebar-collapsed .manuscript-sidebar{margin-left:0}
+  .app-sidebar [data-slot="sidebar-footer"] [data-slot="sidebar-menu"]{display:flex}
 }
 
 @media(prefers-reduced-motion:reduce){
-  .manuscript-sidebar,.web-sidebar-toggle{transition:none}
+  .manuscript-sidebar,.web-sidebar-tools{transition:none}
 }
