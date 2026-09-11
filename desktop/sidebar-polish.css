@@ -1,0 +1,140 @@
+.desktop-shell{
+  width:100%;
+  height:100dvh;
+  overflow:hidden;
+  position:relative;
+  --desktop-sidebar-width:238px;
+  --desktop-sidebar-bg:#243449;
+  --desktop-scrollbar:#5f7489;
+  --desktop-scrollbar-hover:#7890a6;
+}
+
+/* 大纲和正文使用同一套侧栏尺寸与头部节奏，切换模块时不再横向跳动。 */
+.desktop-shell .manuscript-sidebar{
+  width:var(--desktop-sidebar-width);
+  min-width:var(--desktop-sidebar-width);
+  background:var(--desktop-sidebar-bg);
+  transition:margin-left .2s ease;
+}
+.desktop-shell .manuscript-brand{
+  gap:13px;
+  padding:24px 15px 27px;
+}
+.desktop-shell .manuscript-brand>span{
+  width:39px;
+  height:39px;
+  border-radius:10px;
+}
+.desktop-shell .manuscript-brand strong{
+  font-size:24px;
+  letter-spacing:.15em;
+  font-weight:650;
+}
+.desktop-shell .manuscript-brand small{
+  font-size:12px;
+  margin-top:1px;
+  letter-spacing:.13em;
+}
+.desktop-shell .manuscript-book-picker{
+  gap:4px;
+  padding:0 6px 22px;
+  border-bottom:1px solid #3a4b60;
+}
+.desktop-shell .manuscript-book-picker select{
+  height:36px;
+  border-color:#4a5b70;
+  background:#2e4157;
+  border-radius:7px;
+}
+.desktop-shell .manuscript-section-tabs{
+  padding:14px 12px 14px;
+}
+
+/* 统一使用桌面外壳自己的收起按钮，避免大纲和正文各长一套。 */
+.desktop-shell .topbar [data-slot="sidebar-trigger"]{
+  display:none;
+}
+.desktop-sidebar-toggle{
+  position:fixed;
+  z-index:90;
+  top:21px;
+  left:calc(var(--desktop-sidebar-width) + 10px);
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d8e1ea;
+  border-radius:9px;
+  background:rgba(255,255,255,.92);
+  color:#536b83;
+  box-shadow:0 2px 10px #24344912;
+  backdrop-filter:blur(8px);
+  transition:left .2s ease,background .15s ease,color .15s ease;
+}
+.desktop-sidebar-toggle:hover{
+  background:#f3f7fa;
+  color:#294d70;
+}
+.desktop-shell .topbar,
+.desktop-shell .manuscript-topbar{
+  padding-left:58px;
+}
+
+/* 收起后两种工作区都让出完整画布，按钮留在左上角负责展开。 */
+.desktop-shell.desktop-sidebar-collapsed [data-slot="sidebar-gap"]{
+  width:0!important;
+}
+.desktop-shell.desktop-sidebar-collapsed [data-slot="sidebar-container"]{
+  left:calc(var(--desktop-sidebar-width) * -1)!important;
+}
+.desktop-shell.desktop-sidebar-collapsed .manuscript-sidebar{
+  margin-left:calc(var(--desktop-sidebar-width) * -1);
+}
+.desktop-shell.desktop-sidebar-collapsed .desktop-sidebar-toggle{
+  left:10px;
+}
+
+/* 深色侧栏不再配一条惨白的系统滚动条。 */
+.desktop-shell .app-sidebar [data-slot="sidebar-content"],
+.desktop-shell .manuscript-chapter-list{
+  scrollbar-width:thin;
+  scrollbar-color:var(--desktop-scrollbar) var(--desktop-sidebar-bg);
+}
+.desktop-shell .app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar,
+.desktop-shell .manuscript-chapter-list::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+.desktop-shell .app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar-track,
+.desktop-shell .manuscript-chapter-list::-webkit-scrollbar-track{
+  background:var(--desktop-sidebar-bg);
+}
+.desktop-shell .app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar-thumb,
+.desktop-shell .manuscript-chapter-list::-webkit-scrollbar-thumb{
+  background:var(--desktop-scrollbar);
+  border:2px solid var(--desktop-sidebar-bg);
+  border-radius:999px;
+}
+.desktop-shell .app-sidebar [data-slot="sidebar-content"]::-webkit-scrollbar-thumb:hover,
+.desktop-shell .manuscript-chapter-list::-webkit-scrollbar-thumb:hover{
+  background:var(--desktop-scrollbar-hover);
+}
+
+/* 正文阶段列表继承大纲侧栏的密度，避免切过去突然变成另一款软件。 */
+.desktop-shell .manuscript-search{
+  margin:15px 12px 10px;
+}
+.desktop-shell .manuscript-stage-label{
+  padding-left:10px;
+  padding-right:10px;
+}
+.desktop-shell .manuscript-sidebar-footer{
+  padding:12px;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .desktop-shell .manuscript-sidebar,
+  .desktop-sidebar-toggle{
+    transition:none;
+  }
+}
