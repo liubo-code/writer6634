@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import WebSidebarToggle from "@/components/web-sidebar-toggle";
 import "./globals.css";
 import "./mobile.css";
 import "./flexible.css";
+import "./sidebar-polish.css";
 
 export const metadata: Metadata = {
   title: "伏线 · 小说工作台",
@@ -25,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <WebSidebarToggle />
+      </body>
     </html>
   );
 }
