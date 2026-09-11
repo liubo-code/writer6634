@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./mobile.css";
+import "./flexible.css";
 
 export const metadata: Metadata = {
   title: "伏线 · 小说工作台",
