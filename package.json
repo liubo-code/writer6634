@@ -19,8 +19,9 @@
     "deploy": "npx @vinext/cloudflare@1.0.0-beta.5 deploy",
     "desktop:web": "vite --config desktop/vite.config.ts",
     "desktop:web:build": "vite build --config desktop/vite.config.ts",
-    "desktop:dev": "tauri dev",
-    "desktop:build": "tauri build"
+    "desktop:icons": "tauri icon public/favicon.svg",
+    "desktop:dev": "pnpm desktop:icons && tauri dev",
+    "desktop:build": "pnpm desktop:icons && tauri build"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
