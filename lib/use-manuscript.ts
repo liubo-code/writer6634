@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ManuscriptListSchema, type ManuscriptChapter } from './manuscript';
+import { type ManuscriptChapter } from './manuscript';
 import type { Card } from './story';
-import { isDesktopRuntime, loadLocalManuscripts, saveLocalManuscript } from './desktop-store';
+import { loadLocalManuscripts, saveLocalManuscript } from './desktop-store';
 
 type Status = 'loading' | 'saved' | 'pending' | 'saving' | 'error';
 type ChapterMap = Record<string, ManuscriptChapter>;
@@ -21,7 +21,6 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
   const timers = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
   const mountedBook = useRef(bookId);
   const key = `fuxian-manuscript-unsaved-${owner}-${bookId}`;
-  const desktop = isDesktopRuntime();
 
   const cache = useCallback(() => {
     try {
@@ -42,36 +41,12 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
           if (!current || signature(current) === saved.current[outlineCardId]) break;
           setStatus('saving');
           const sent = signature(current);
-          let nextRevision = revisions.current[outlineCardId] || 0;
-          let updatedAt = new Date().toISOString();
-
-          if (desktop) {
-            const stored = await saveLocalManuscript(bookId, { ...current, revision: nextRevision });
-            nextRevision = stored.revision;
-            updatedAt = stored.updatedAt;
-          } else {
-            const r = await fetch('/api/manuscript', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                bookId,
-                outlineCardId,
-                content: current.content,
-                revisionNotes: current.revisionNotes,
-                revision: nextRevision,
-              }),
-            });
-            const v = await r.json() as { error?: string; revision?: number; updatedAt?: string };
-            if (!r.ok) throw new Error(v.error || '正文保存未完成');
-            nextRevision = v.revision || nextRevision || 1;
-            updatedAt = v.updatedAt || updatedAt;
-          }
-
-          revisions.current[outlineCardId] = nextRevision;
+          const stored = await saveLocalManuscript(bookId, { ...current, revision: revisions.current[outlineCardId] || 0 });
+          revisions.current[outlineCardId] = stored.revision;
           saved.current[outlineCardId] = sent;
           const latest = drafts.current[outlineCardId];
           if (latest) {
-            const next = { ...latest, revision: nextRevision, updatedAt };
+            const next = { ...latest, revision: stored.revision, updatedAt: stored.updatedAt };
             drafts.current[outlineCardId] = next;
             setItems(all => ({ ...all, [outlineCardId]: next }));
           }
@@ -91,7 +66,7 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
     inflight.current[outlineCardId] = job;
     void job.finally(() => { delete inflight.current[outlineCardId]; });
     return job;
-  }, [bookId, cache, desktop]);
+  }, [bookId, cache]);
 
   const flushAll = useCallback(async () => {
     const ids = Object.keys(drafts.current).filter(id => signature(drafts.current[id]) !== saved.current[id]);
@@ -105,30 +80,21 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
     setStatus('loading');
     setError('');
     try {
-      let remoteItems: ManuscriptChapter[] = [];
-      if (desktop) {
-        remoteItems = await loadLocalManuscripts(bookId);
-      } else {
-        const r = await fetch('/api/manuscript?bookId=' + encodeURIComponent(bookId), { cache: 'no-store' });
-        const raw = await r.json() as unknown;
-        if (!r.ok) throw new Error((raw as { error?: string }).error || '无法读取正文');
-        remoteItems = ManuscriptListSchema.parse(raw).items;
-      }
-
+      const localItems = await loadLocalManuscripts(bookId);
       if (mountedBook.current !== bookId) return;
       const map: ChapterMap = {};
-      const serverIds = new Set<string>();
-      for (const x of remoteItems) {
+      const storedIds = new Set<string>();
+      for (const x of localItems) {
         map[x.outlineCardId] = x;
         drafts.current[x.outlineCardId] = x;
         saved.current[x.outlineCardId] = signature(x);
         revisions.current[x.outlineCardId] = x.revision;
-        serverIds.add(x.outlineCardId);
+        storedIds.add(x.outlineCardId);
       }
 
       const legacyToSave: string[] = [];
       for (const c of chapters) {
-        if (serverIds.has(c.id) || (!c.body && !c.revisionNotes)) continue;
+        if (storedIds.has(c.id) || (!c.body && !c.revisionNotes)) continue;
         const legacy: ManuscriptChapter = {
           outlineCardId: c.id,
           content: c.body || '',
@@ -144,11 +110,11 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
       }
 
       try {
-        const local = JSON.parse(localStorage.getItem(key) || 'null') as { items?: ManuscriptChapter[]; revisions?: Record<string, number> } | null;
-        if (local?.items?.length) {
-          for (const x of local.items) {
+        const cached = JSON.parse(localStorage.getItem(key) || 'null') as { items?: ManuscriptChapter[]; revisions?: Record<string, number> } | null;
+        if (cached?.items?.length) {
+          for (const x of cached.items) {
             if (!chapters.some(c => c.id === x.outlineCardId)) continue;
-            const localRevision = local.revisions?.[x.outlineCardId];
+            const localRevision = cached.revisions?.[x.outlineCardId];
             if (Number.isInteger(localRevision) && (localRevision as number) >= 0) revisions.current[x.outlineCardId] = localRevision as number;
             const recovered = { ...x, revision: revisions.current[x.outlineCardId] ?? x.revision ?? 0 };
             map[x.outlineCardId] = recovered;
@@ -161,14 +127,14 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
       const dirty = Object.keys(drafts.current).filter(id => signature(drafts.current[id]) !== saved.current[id]);
       if (dirty.length) {
         setStatus('pending');
-        setTimeout(() => dirty.forEach(id => void flushOne(id)), desktop ? 60 : 120);
+        setTimeout(() => dirty.forEach(id => void flushOne(id)), 60);
       } else setStatus('saved');
-      if (legacyToSave.length) setTimeout(() => legacyToSave.forEach(id => void flushOne(id)), desktop ? 80 : 160);
+      if (legacyToSave.length) setTimeout(() => legacyToSave.forEach(id => void flushOne(id)), 80);
     } catch (e) {
       setError(e instanceof Error ? e.message : '无法读取正文');
       setStatus('error');
     }
-  }, [bookId, chapters, desktop, flushOne, key]);
+  }, [bookId, chapters, flushOne, key]);
 
   useEffect(() => {
     drafts.current = {};
@@ -199,8 +165,8 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
     setError('');
     cache();
     if (timers.current[card.id]) clearTimeout(timers.current[card.id]);
-    timers.current[card.id] = setTimeout(() => void flushOne(card.id), desktop ? 250 : 850);
-  }, [cache, desktop, flushOne, get]);
+    timers.current[card.id] = setTimeout(() => void flushOne(card.id), 250);
+  }, [cache, flushOne, get]);
 
   useEffect(() => {
     const leave = (e: BeforeUnloadEvent) => {
@@ -208,16 +174,13 @@ export function useManuscript(owner: string, bookId: string, chapters: Card[]) {
       if (dirty) { e.preventDefault(); e.returnValue = ''; }
     };
     const hidden = () => { if (document.hidden) void flushAll(); };
-    const online = () => void flushAll();
     window.addEventListener('beforeunload', leave);
-    window.addEventListener('online', online);
     document.addEventListener('visibilitychange', hidden);
     return () => {
       window.removeEventListener('beforeunload', leave);
-      window.removeEventListener('online', online);
       document.removeEventListener('visibilitychange', hidden);
     };
   }, [flushAll]);
 
-  return { items, status, error, get, update, flushAll, load, desktop };
+  return { items, status, error, get, update, flushAll, load, desktop: true };
 }
