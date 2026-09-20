@@ -138,3 +138,64 @@
     transition:none;
   }
 }
+
+
+.desktop-shell-tools{
+  position:fixed;
+  z-index:90;
+  top:21px;
+  left:calc(var(--desktop-sidebar-width) + 10px);
+  display:flex;
+  gap:7px;
+  transition:left .2s ease;
+}
+.desktop-shell-tools .desktop-sidebar-toggle,
+.desktop-shell-tools .desktop-folder-button{
+  position:static;
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid #d8e1ea;
+  border-radius:9px;
+  background:rgba(255,255,255,.92);
+  color:#536b83;
+  box-shadow:0 2px 10px #24344912;
+  backdrop-filter:blur(8px);
+}
+.desktop-shell-tools button:hover{
+  background:#f3f7fa;
+  color:#294d70;
+}
+.desktop-shell.desktop-sidebar-collapsed .desktop-shell-tools{left:10px}
+.desktop-shell .desktop-sidebar-toggle{left:auto}
+.desktop-shell.desktop-sidebar-collapsed .desktop-sidebar-toggle{left:auto}
+
+.desktop-storage-setup{
+  min-height:100dvh;
+  display:grid;
+  place-items:center;
+  padding:32px;
+  background:#edf3f7;
+  color:#243449;
+}
+.desktop-storage-card{
+  width:min(520px,100%);
+  padding:42px;
+  border:1px solid #d6e0e8;
+  border-radius:20px;
+  background:white;
+  box-shadow:0 18px 60px #24344918;
+  text-align:center;
+}
+.desktop-storage-icon{
+  width:58px;height:58px;margin:0 auto 18px;display:grid;place-items:center;
+  border-radius:16px;background:#d5efe7;color:#315d58;
+}
+.desktop-storage-card h1{font-size:26px;font-weight:700;margin-bottom:12px}
+.desktop-storage-card p{line-height:1.8;color:#66788b;margin-bottom:24px}
+.desktop-storage-card button{
+  min-width:170px;height:44px;border:0;border-radius:10px;background:#315f88;color:white;font-weight:650;
+}
+.desktop-storage-card button:disabled{opacity:.55}
+.desktop-storage-card small{display:block;margin-top:14px;color:#8997a6}
