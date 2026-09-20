@@ -140,36 +140,89 @@
 }
 
 
-.desktop-shell-tools{
+
+/* 折叠改成侧栏分隔线上的小把手，避免压住书名或章节标题。 */
+.desktop-sidebar-toggle{
   position:fixed;
-  z-index:90;
-  top:21px;
-  left:calc(var(--desktop-sidebar-width) + 10px);
-  display:flex;
-  gap:7px;
-  transition:left .2s ease;
-}
-.desktop-shell-tools .desktop-sidebar-toggle,
-.desktop-shell-tools .desktop-folder-button{
-  position:static;
-  width:36px;
-  height:36px;
+  z-index:95;
+  top:50%;
+  left:calc(var(--desktop-sidebar-width) - 13px);
+  transform:translateY(-50%);
+  width:26px;
+  height:46px;
   display:grid;
   place-items:center;
-  border:1px solid #d8e1ea;
-  border-radius:9px;
-  background:rgba(255,255,255,.92);
-  color:#536b83;
-  box-shadow:0 2px 10px #24344912;
-  backdrop-filter:blur(8px);
+  border:1px solid #53687d;
+  border-radius:0 9px 9px 0;
+  background:#2b3e54;
+  color:#c9d6e2;
+  box-shadow:2px 2px 10px #18283a24;
+  transition:left .2s ease,background .15s ease,color .15s ease;
 }
-.desktop-shell-tools button:hover{
-  background:#f3f7fa;
-  color:#294d70;
+.desktop-sidebar-toggle:hover{background:#365069;color:white}
+.desktop-shell.desktop-sidebar-collapsed .desktop-sidebar-toggle{
+  left:0;
+  border-radius:0 9px 9px 0;
 }
-.desktop-shell.desktop-sidebar-collapsed .desktop-shell-tools{left:10px}
-.desktop-shell .desktop-sidebar-toggle{left:auto}
-.desktop-shell.desktop-sidebar-collapsed .desktop-sidebar-toggle{left:auto}
+
+/* 保存位置是低频设置，放到底部侧栏，不再抢顶部标题区。 */
+.desktop-folder-button{
+  position:fixed;
+  z-index:94;
+  left:12px;
+  bottom:13px;
+  width:calc(var(--desktop-sidebar-width) - 24px);
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid #4a6076;
+  border-radius:8px;
+  background:#2e4359;
+  color:#d7e3ed;
+  font-size:12px;
+}
+.desktop-folder-button:hover{background:#38536a;color:white}
+.desktop-folder-button:disabled{opacity:.55}
+.desktop-shell .app-sidebar [data-slot="sidebar-footer"]{padding-bottom:58px}
+.desktop-shell .manuscript-sidebar-footer{padding-bottom:58px}
+
+/* 顶部不再需要给浮动工具让位。 */
+.desktop-shell .topbar,
+.desktop-shell .manuscript-topbar{padding-left:22px}
+
+/* 正文章节强制使用纵向列表，标题允许完整换行。 */
+.desktop-shell .manuscript-stage-group>button{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  width:100%;
+  text-align:left;
+  border-radius:8px;
+  padding:10px 10px;
+  color:#cfdae6;
+  margin:0 0 4px;
+}
+.desktop-shell .manuscript-stage-group>button:hover{background:#2e4359}
+.desktop-shell .manuscript-stage-group>button.active{background:#38536a;color:white}
+.desktop-shell .manuscript-stage-group .manuscript-chapter-no{
+  width:25px;
+  flex:none;
+  padding-top:2px;
+}
+.desktop-shell .manuscript-stage-group .manuscript-chapter-name{
+  display:block;
+  flex:1;
+  min-width:0;
+}
+.desktop-shell .manuscript-stage-group .manuscript-chapter-name strong{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  word-break:break-word;
+  line-height:1.45;
+}
 
 .desktop-storage-setup{
   min-height:100dvh;
@@ -199,3 +252,9 @@
 }
 .desktop-storage-card button:disabled{opacity:.55}
 .desktop-storage-card small{display:block;margin-top:14px;color:#8997a6}
+
+@media (max-width:780px){
+  .desktop-sidebar-toggle{display:none}
+  .desktop-folder-button{display:none}
+  .desktop-shell .topbar,.desktop-shell .manuscript-topbar{padding-left:14px}
+}
