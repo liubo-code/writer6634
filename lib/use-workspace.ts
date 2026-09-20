@@ -1,13 +1,12 @@
 'use client';
 import { useEffect,useRef,useState,useCallback } from 'react';
 import { WorkspaceSchema, type Workspace } from './story';
-import { isDesktopRuntime, loadLocalWorkspace, saveLocalWorkspace } from './desktop-store';
+import { loadLocalWorkspace, saveLocalWorkspace } from './desktop-store';
 
 export function useWorkspace(owner:string){
   const [data,setData]=useState<Workspace|null>(null),[status,setStatus]=useState('loading'),[error,setError]=useState(''),[recovery,setRecovery]=useState<Workspace|null>(null),[tick,setTick]=useState(0);
   const current=useRef<Workspace|null>(null),rev=useRef(0),saved=useRef(''),inflight=useRef<Promise<boolean>|null>(null),blocked=useRef(false),undoStack=useRef<Workspace[]>([]),redoStack=useRef<Workspace[]>([]);
   const key='fuxian-unsaved-'+owner;
-  const desktop=isDesktopRuntime();
 
   const cache=useCallback((d:Workspace)=>{
     try{localStorage.setItem(key,JSON.stringify({data:d,revision:rev.current}));}catch{}
@@ -16,29 +15,21 @@ export function useWorkspace(owner:string){
   const load=useCallback(async()=>{
     setStatus('loading');
     try{
-      if(desktop){
-        const local=await loadLocalWorkspace(owner);
-        const d=WorkspaceSchema.parse(local.data);
-        rev.current=local.revision;
-        current.current=d;
-        saved.current=JSON.stringify(d);
-        blocked.current=false;
-        setData(d);
-        setStatus('saved');
-        setError('');
-        return;
-      }
-
-      const r=await fetch('/api/workspace',{cache:'no-store'}),v=await r.json() as {error?:string;data:unknown;revision:number};
-      if(!r.ok)throw new Error(v.error);
-      const d=WorkspaceSchema.parse(v.data);
-      rev.current=v.revision;current.current=d;saved.current=JSON.stringify(d);blocked.current=false;setData(d);setStatus('saved');setError('');
+      const local=await loadLocalWorkspace(owner);
+      const d=WorkspaceSchema.parse(local.data);
+      rev.current=local.revision;
+      current.current=d;
+      saved.current=JSON.stringify(d);
+      blocked.current=false;
+      setData(d);
+      setStatus('saved');
+      setError('');
       try{
         const raw=localStorage.getItem(key);
-        if(raw){const local=WorkspaceSchema.safeParse(JSON.parse(raw).data);if(local.success&&JSON.stringify(local.data)!==saved.current)setRecovery(local.data);}
+        if(raw){const cached=WorkspaceSchema.safeParse(JSON.parse(raw).data);if(cached.success&&JSON.stringify(cached.data)!==saved.current)setRecovery(cached.data);}
       }catch{}
-    }catch(e){setError(e instanceof Error?e.message:'无法读取');setStatus('error');}
-  },[desktop,key,owner]);
+    }catch(e){setError(e instanceof Error?e.message:'无法读取本地数据');setStatus('error');}
+  },[key,owner]);
 
   useEffect(()=>{void load();},[load]);
 
@@ -50,27 +41,20 @@ export function useWorkspace(owner:string){
         while(current.current&&JSON.stringify(current.current)!==saved.current){
           setStatus('saving');
           const text=JSON.stringify(current.current);
-          if(desktop){
-            const nextRevision=rev.current+1;
-            await saveLocalWorkspace(owner,JSON.parse(text) as Workspace,nextRevision);
-            rev.current=nextRevision;
-          }else{
-            const r=await fetch('/api/workspace',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:JSON.parse(text),revision:rev.current})});
-            const v=await r.json() as {error?:string;data:unknown;revision:number};
-            if(!r.ok){if(r.status===409)blocked.current=true;throw new Error(v.error||'保存未完成');}
-            rev.current=v.revision;
-          }
+          const nextRevision=rev.current+1;
+          await saveLocalWorkspace(owner,JSON.parse(text) as Workspace,nextRevision);
+          rev.current=nextRevision;
           saved.current=text;
           if(current.current&&JSON.stringify(current.current)===text){try{localStorage.removeItem(key);}catch{}}
           else if(current.current)cache(current.current);
         }
         setStatus('saved');setError('');return true;
-      }catch(e){setStatus('error');setError(e instanceof Error?e.message:'保存未完成');return false;}
+      }catch(e){setStatus('error');setError(e instanceof Error?e.message:'本地保存未完成');return false;}
     })();
     inflight.current=job;
     void job.finally(()=>{inflight.current=null;});
     return job;
-  },[cache,desktop,key,owner]);
+  },[cache,key,owner]);
 
   const commit=useCallback((fn:(draft:Workspace)=>void)=>{
     if(!current.current)return;
@@ -88,12 +72,13 @@ export function useWorkspace(owner:string){
     to.push(current.current);current.current=next;setData(next);cache(next);setStatus('pending');setTick(t=>t+1);
   },[cache]);
 
-  useEffect(()=>{if(!tick)return;const timer=setTimeout(()=>void flush(),desktop?250:750);return()=>clearTimeout(timer);},[tick,flush,desktop]);
+  useEffect(()=>{if(!tick)return;const timer=setTimeout(()=>void flush(),250);return()=>clearTimeout(timer);},[tick,flush]);
   useEffect(()=>{
-    const leave=(e:BeforeUnloadEvent)=>{if(current.current&&JSON.stringify(current.current)!==saved.current){e.preventDefault();e.returnValue='';}},hidden=()=>{if(document.hidden)void flush();},online=()=>void flush();
-    window.addEventListener('beforeunload',leave);window.addEventListener('online',online);document.addEventListener('visibilitychange',hidden);
-    return()=>{window.removeEventListener('beforeunload',leave);window.removeEventListener('online',online);document.removeEventListener('visibilitychange',hidden);};
+    const leave=(e:BeforeUnloadEvent)=>{if(current.current&&JSON.stringify(current.current)!==saved.current){e.preventDefault();e.returnValue='';}};
+    const hidden=()=>{if(document.hidden)void flush();};
+    window.addEventListener('beforeunload',leave);document.addEventListener('visibilitychange',hidden);
+    return()=>{window.removeEventListener('beforeunload',leave);document.removeEventListener('visibilitychange',hidden);};
   },[flush]);
 
-  return{data,status,error,recovery,setRecovery,commit,flush,load,history,canUndo:undoStack.current.length>0,canRedo:redoStack.current.length>0,blocked:blocked.current,desktop};
+  return{data,status,error,recovery,setRecovery,commit,flush,load,history,canUndo:undoStack.current.length>0,canRedo:redoStack.current.length>0,blocked:blocked.current,desktop:true};
 }
