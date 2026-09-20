@@ -44,27 +44,25 @@ function DesktopApp(){
 
   return <div className={'desktop-shell '+(sidebarOpen?'':'desktop-sidebar-collapsed')}>
     <Board ownerKey="local-user"/>
-    <div className="desktop-shell-tools">
-      <button
-        className="desktop-sidebar-toggle"
-        type="button"
-        aria-label={sidebarOpen?'收起左侧栏':'展开左侧栏'}
-        title={sidebarOpen?'收起左侧栏':'展开左侧栏'}
-        onClick={()=>setSidebarOpen(v=>!v)}
-      >
-        {sidebarOpen?<PanelLeftClose size={18}/>:<PanelLeftOpen size={18}/>}
-      </button>
-      <button
-        className="desktop-folder-button"
-        type="button"
-        aria-label="更改本地保存位置"
-        title={'本地保存位置：'+root}
-        onClick={()=>void chooseRoot()}
-        disabled={busy}
-      >
-        <FolderCog size={18}/>
-      </button>
-    </div>
+    <button
+      className="desktop-sidebar-toggle"
+      type="button"
+      aria-label={sidebarOpen?'收起左侧栏':'展开左侧栏'}
+      title={sidebarOpen?'收起左侧栏':'展开左侧栏'}
+      onClick={()=>setSidebarOpen(v=>!v)}
+    >
+      {sidebarOpen?<PanelLeftClose size={16}/>:<PanelLeftOpen size={16}/>}
+    </button>
+    {sidebarOpen&&<button
+      className="desktop-folder-button"
+      type="button"
+      aria-label="更改本地保存位置"
+      title={'本地保存位置：'+root}
+      onClick={()=>void chooseRoot()}
+      disabled={busy}
+    >
+      <FolderCog size={16}/><span>保存位置</span>
+    </button>}
   </div>;
 }
 
