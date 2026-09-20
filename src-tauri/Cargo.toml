@@ -1,6 +1,6 @@
 [package]
 name = "fuxian"
-version = "0.2.0"
+version = "0.2.1"
 description = "伏线 · 本地小说工作台"
 edition = "2021"
 
