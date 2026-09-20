@@ -1,5 +1,9 @@
 name: Build Fuxian Desktop
 
+concurrency:
+  group: fuxian-desktop-build
+  cancel-in-progress: true
+
 on:
   push:
     branches:
