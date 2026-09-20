@@ -20,7 +20,8 @@ import { Toaster,toast } from 'sonner';
 import Corkboard,{CardFace} from './corkboard';
 import ManuscriptWorkspace from './manuscript';
 import FlexibleCardFields from './flexible-card-fields';
-import { useWorkspace } from '@/lib/use-workspace';\nimport { deleteLocalBookManuscripts, listLocalSnapshots, loadLocalSnapshot, saveLocalSnapshot } from '@/lib/desktop-store';
+import { useWorkspace } from '@/lib/use-workspace';
+import { deleteLocalBookManuscripts, listLocalSnapshots, loadLocalSnapshot, saveLocalSnapshot } from '@/lib/desktop-store';
 import { kinds,labels,statuses,colors,makeBook,makeCard,makeStage,cloneBook,chaptersOf,moveChapter,markdown,wordCount,uid,LinkSchema,WorkspaceSchema,BookSchema,fieldNames,defaultFieldKeys,type Book,type Card,type Stage,type Kind,type Link } from '@/lib/story';
 
 function Choice({value,onChange,options,label}:{value:string;onChange:(s:string)=>void;options:{id:string;label:string}[];label:string}){return <Select value={value||'__none'} onValueChange={s=>onChange(s==='__none'?'':s)}><SelectTrigger aria-label={label}><SelectValue placeholder={label}/></SelectTrigger><SelectContent>{options.map(o=><SelectItem key={o.id||'__none'} value={o.id||'__none'}>{o.label}</SelectItem>)}</SelectContent></Select>;}
